@@ -1,0 +1,32 @@
+# Python / FastAPI
+ai-service-fastapi/venv/
+ai-service-fastapi/__pycache__/
+ai-service-fastapi/.pytest_cache/
+*.pyc
+
+# React / Node
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/.vite/
+
+# Laravel
+backend-laravel/vendor/
+backend-laravel/.env
+backend-laravel/.env.*
+!backend-laravel/.env.example
+
+# Laravel storage
+backend-laravel/storage/logs/
+backend-laravel/storage/framework/
+backend-laravel/storage/app/
+
+# SQLite local database
+backend-laravel/database/*.sqlite
+backend-laravel/database/*.sqlite-journal
+ai-service-fastapi/.env
+screenshots/desktop.ini
+
+# General
+.DS_Store
+Thumbs.db
+*.log
