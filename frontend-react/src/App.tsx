@@ -1,13 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "./api/axios";
+import DashboardPage from "./pages/DashboardPage";
 import CreateCandidatePage from "./pages/CreateCandidatePage";
 import CandidatesPage from "./pages/CandidatesPage";
 import JobsPage from "./pages/JobsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import LandingPage from "./pages/LandingPage";
+import { TalentSyncLogo } from "./components/Logo";
+import { ShieldCheckIcon } from "./components/Icons";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { useLanguage } from "./context/LanguageContext";
 
-type Tab = "create" | "candidates" | "jobs";
-type AuthMode = "login" | "register";
+
+type Tab = "dashboard" | "create" | "candidates" | "jobs";
+type AuthMode = "landing" | "login" | "register";
 
 type User = {
   id: number;
@@ -16,10 +23,17 @@ type User = {
 };
 
 function App() {
-  const [tab, setTab] = useState<Tab>("create");
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const { t, locale } = useLanguage();
+  const [tab, setTab] = useState<Tab>("dashboard");
+  const [authMode, setAuthMode] = useState<AuthMode>("landing");
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [anonymousMode, setAnonymousMode] = useState(false);
+
+
+  useEffect(() => {
+    api.defaults.headers.common["X-Anonymous-Mode"] = anonymousMode ? "1" : "0";
+  }, [anonymousMode]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -33,7 +47,7 @@ function App() {
       try {
         const response = await api.get("/me");
         setUser(response.data);
-      } catch (error) {
+      } catch {
         localStorage.removeItem("auth_token");
         setUser(null);
       } finally {
@@ -46,49 +60,65 @@ function App() {
 
   const handleAuthSuccess = (authenticatedUser: User) => {
     setUser(authenticatedUser);
-    setTab("create");
+    setTab("dashboard");
+  };
+
+  const handleDemoLogin = async () => {
+    try {
+      const res = await api.post("/login", {
+        email: "demo@talentsync.ai",
+        password: "password",
+      });
+      localStorage.setItem("auth_token", res.data.token);
+      setUser(res.data.user);
+      setTab("dashboard");
+    } catch {
+      setAuthMode("login");
+    }
   };
 
   const handleLogout = async () => {
     try {
       await api.post("/logout");
-    } catch (error) {
-      // ignore logout API error
+    } catch {
     } finally {
       localStorage.removeItem("auth_token");
       setUser(null);
-      setAuthMode("login");
-      setTab("create");
+      setAuthMode("landing");
+      setTab("dashboard");
     }
   };
 
-  const pageTitle = useMemo(() => {
-    switch (tab) {
-      case "create":
-        return "Nouveau candidat";
-      case "candidates":
-        return "Candidats";
-      case "jobs":
-        return "Jobs & Ranking";
-      default:
-        return "TalentSync AI";
-    }
-  }, [tab]);
-
   if (checkingAuth) {
-    return <div className="loading-screen">Chargement...</div>;
+    return <div className="loading-screen">{t("common.loading")}</div>;
   }
 
   if (!user) {
-    return authMode === "login" ? (
-      <LoginPage
-        onAuthSuccess={handleAuthSuccess}
-        goToRegister={() => setAuthMode("register")}
-      />
-    ) : (
+    if (authMode === "landing") {
+      return (
+        <LandingPage
+          onStartDemo={handleDemoLogin}
+          goToLogin={() => setAuthMode("login")}
+          goToRegister={() => setAuthMode("register")}
+        />
+      );
+    }
+
+    if (authMode === "login") {
+      return (
+        <LoginPage
+          onAuthSuccess={handleAuthSuccess}
+          goToRegister={() => setAuthMode("register")}
+          goToLanding={() => setAuthMode("landing")}
+        />
+      );
+    }
+
+    return (
       <RegisterPage
         onAuthSuccess={handleAuthSuccess}
         goToLogin={() => setAuthMode("login")}
+        goToLanding={() => setAuthMode("landing")}
       />
     );
   }
@@ -97,21 +127,46 @@ function App() {
     <div className="app-root">
       <header className="topbar">
         <div className="topbar-brand">
-          <div className="brand-dot" />
+          <TalentSyncLogo size={36} />
           <div>
-            <h1>TalentSync AI</h1>
-            <p>Bienvenue, {user.name}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <h1>{t("common.brand_title")}</h1>
+              <span className="brand-badge">{t("common.brand_badge")}</span>
+            </div>
+            <p className="topbar-slogan">
+              {t("common.slogan")} &bull; {t("common.welcome")}, {locale === "en" && user.name === "Recruteur TalentSync" ? "TalentSync Recruiter" : user.name}
+            </p>
           </div>
         </div>
 
         <div className="topbar-right">
+          <LanguageSwitcher />
+
+          <button
+            type="button"
+            className={`anti-bias-toggle ${anonymousMode ? "active" : ""}`}
+            onClick={() => setAnonymousMode(!anonymousMode)}
+            title={t("common.anti_bias_tooltip")}
+          >
+            <ShieldCheckIcon width="16" height="16" />
+            <span>{anonymousMode ? t("common.anti_bias_active") : t("common.anti_bias_mode")}</span>
+          </button>
+
           <nav className="top-nav">
+            <button
+              type="button"
+              className={tab === "dashboard" ? "nav-tab nav-tab-active" : "nav-tab"}
+              onClick={() => setTab("dashboard")}
+            >
+              {t("common.tab_dashboard")}
+            </button>
+
             <button
               type="button"
               className={tab === "create" ? "nav-tab nav-tab-active" : "nav-tab"}
               onClick={() => setTab("create")}
             >
-              Nouveau candidat
+              {t("common.tab_create")}
             </button>
 
             <button
@@ -121,7 +176,7 @@ function App() {
               }
               onClick={() => setTab("candidates")}
             >
-              Candidats
+              {t("common.tab_candidates")}
             </button>
 
             <button
@@ -129,31 +184,26 @@ function App() {
               className={tab === "jobs" ? "nav-tab nav-tab-active" : "nav-tab"}
               onClick={() => setTab("jobs")}
             >
-              Jobs & Ranking
+              {t("common.tab_jobs")}
             </button>
           </nav>
 
           <button type="button" className="logout-button" onClick={handleLogout}>
-            Déconnexion
+            {t("common.logout")}
           </button>
         </div>
       </header>
 
       <main>
-        <section className="section-header">
-          <div className="section-header-content">
-            <span className="section-kicker">Admin Workspace</span>
-            <h2>{pageTitle}</h2>
-            <p>
-              Gérez les candidats, les offres et le classement intelligent
-              depuis votre espace recruteur.
-            </p>
-          </div>
-        </section>
-
+        {tab === "dashboard" && (
+          <DashboardPage
+            goToTab={(targetTab) => setTab(targetTab)}
+            anonymousMode={anonymousMode}
+          />
+        )}
         {tab === "create" && <CreateCandidatePage />}
-        {tab === "candidates" && <CandidatesPage />}
-        {tab === "jobs" && <JobsPage />}
+        {tab === "candidates" && <CandidatesPage anonymousMode={anonymousMode} />}
+        {tab === "jobs" && <JobsPage anonymousMode={anonymousMode} />}
       </main>
     </div>
   );

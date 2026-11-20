@@ -1,13 +1,17 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import api from "../api/axios";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 type Props = {
   onAuthSuccess: (user: { id: number; name: string; email: string }) => void;
   goToLogin: () => void;
+  goToLanding?: () => void;
 };
 
-export default function RegisterPage({ onAuthSuccess, goToLogin }: Props) {
+export default function RegisterPage({ onAuthSuccess, goToLogin, goToLanding }: Props) {
+  const { t, locale } = useLanguage();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -31,7 +35,7 @@ export default function RegisterPage({ onAuthSuccess, goToLogin }: Props) {
       onAuthSuccess(response.data.user);
     } catch (err: any) {
       setError(
-        err?.response?.data?.message || "Erreur lors de l'inscription."
+        err?.response?.data?.message || (locale === "fr" ? "Erreur lors de l'inscription." : "Registration error.")
       );
     } finally {
       setLoading(false);
@@ -41,15 +45,19 @@ export default function RegisterPage({ onAuthSuccess, goToLogin }: Props) {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h1>Créer un compte</h1>
-        <p>Inscris-toi pour accéder à TalentSync AI.</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <h1 style={{ margin: 0 }}>{t("auth.register_title")}</h1>
+          <LanguageSwitcher />
+        </div>
+
+        <p>{t("auth.register_subtitle")}</p>
 
         <form onSubmit={handleSubmit} className="candidate-form">
           <div className="form-group">
-            <label>Nom</label>
+            <label>{t("auth.name")}</label>
             <input
               type="text"
-              placeholder="Ex : Aziz Hammami"
+              placeholder={t("auth.name_placeholder")}
               value={form.name}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, name: e.target.value }))
@@ -58,10 +66,10 @@ export default function RegisterPage({ onAuthSuccess, goToLogin }: Props) {
           </div>
 
           <div className="form-group">
-            <label>Email</label>
+            <label>{t("auth.email")}</label>
             <input
               type="email"
-              placeholder="Ex : aziz@gmail.com"
+              placeholder={t("auth.email_placeholder")}
               value={form.email}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, email: e.target.value }))
@@ -70,10 +78,10 @@ export default function RegisterPage({ onAuthSuccess, goToLogin }: Props) {
           </div>
 
           <div className="form-group">
-            <label>Mot de passe</label>
+            <label>{t("auth.password")}</label>
             <input
               type="password"
-              placeholder="Minimum 6 caractères"
+              placeholder={t("auth.password_placeholder")}
               value={form.password}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, password: e.target.value }))
@@ -82,10 +90,10 @@ export default function RegisterPage({ onAuthSuccess, goToLogin }: Props) {
           </div>
 
           <div className="form-group">
-            <label>Confirmer le mot de passe</label>
+            <label>{t("auth.password_confirm")}</label>
             <input
               type="password"
-              placeholder="Retapez le mot de passe"
+              placeholder={t("auth.password_confirm_placeholder")}
               value={form.password_confirmation}
               onChange={(e) =>
                 setForm((prev) => ({
@@ -97,18 +105,26 @@ export default function RegisterPage({ onAuthSuccess, goToLogin }: Props) {
           </div>
 
           <button type="submit" className="primary-button" disabled={loading}>
-            {loading ? "Création..." : "Créer mon compte"}
+            {loading ? t("auth.registering") : t("auth.register_title")}
           </button>
         </form>
 
         {error && <div className="alert alert-error">{error}</div>}
 
         <p className="auth-switch">
-          Déjà un compte ?{" "}
+          {t("auth.has_account")}{" "}
           <button type="button" className="auth-link" onClick={goToLogin}>
-            Se connecter
+            {t("auth.login_link")}
           </button>
         </p>
+
+        {goToLanding && (
+          <p className="auth-switch" style={{ marginTop: "8px" }}>
+            <button type="button" className="auth-link" onClick={goToLanding} style={{ fontSize: "12.5px" }}>
+              {t("auth.back_home")}
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

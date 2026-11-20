@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  ai-service:
+    build:
+      context: ./ai-service-fastapi
+      dockerfile: Dockerfile
+    container_name: talentsync-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+    networks:
+      - talentsync-network
+
+  backend:
+    build:
+      context: ./backend-laravel
+      dockerfile: Dockerfile
+    container_name: talentsync-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ai-service
+    environment:
+      - APP_NAME=TalentSyncAI
+      - APP_ENV=local
+      - APP_KEY=${APP_KEY:-base64:7K5pY7O2M3N4Q5R6S7T8U9V0W1X2Y3Z4A5B6C7D8E9F=}
+      - APP_DEBUG=true
+      - FASTAPI_URL=http://ai-service:8000
+    volumes:
+      - ./backend-laravel/database:/app/database
+      - ./backend-laravel/storage:/app/storage
+    networks:
+      - talentsync-network
+
+  frontend:
+    build:
+      context: ./frontend-react
+      dockerfile: Dockerfile
+    container_name: talentsync-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - talentsync-network
+
+networks:
+  talentsync-network:
+    driver: bridge

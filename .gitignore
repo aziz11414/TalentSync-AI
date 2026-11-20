@@ -2,12 +2,18 @@
 ai-service-fastapi/venv/
 ai-service-fastapi/__pycache__/
 ai-service-fastapi/.pytest_cache/
+ai-service-fastapi/.env
+ai-service-fastapi/.env.*
+!ai-service-fastapi/.env.example
 *.pyc
 
 # React / Node
 frontend-react/node_modules/
 frontend-react/dist/
 frontend-react/.vite/
+frontend-react/.env
+frontend-react/.env.*
+!frontend-react/.env.example
 
 # Laravel
 backend-laravel/vendor/

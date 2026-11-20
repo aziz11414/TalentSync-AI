@@ -100,6 +100,7 @@ class JobController extends Controller
         }
 
         $candidates = $query->get();
+        $isAnonymous = $request->boolean('anonymous') || $request->header('X-Anonymous-Mode') === '1';
         $ranking = [];
 
         foreach ($candidates as $candidate) {
@@ -129,9 +130,17 @@ class JobController extends Controller
                 ]
             );
 
+            $candPayload = $candidate->toArray();
+            if ($isAnonymous) {
+                $candPayload['full_name'] = "Candidat #C{$candidate->id}";
+                $candPayload['email'] = "candidat.{$candidate->id}@anonyme.fr";
+                $candPayload['phone'] = "+216 •••• ••••";
+            }
+
             $ranking[] = [
-                'candidate' => $candidate,
+                'candidate' => $candPayload,
                 'score' => $score,
+                'score_breakdown' => $match['score_breakdown'] ?? null,
                 'matched_skills' => $matchedSkills,
                 'missing_skills' => $missingSkills,
                 'notes' => $notes,

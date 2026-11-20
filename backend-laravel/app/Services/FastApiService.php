@@ -31,4 +31,11 @@ class FastApiService
             ->post($this->baseUrl . '/match-candidate-job', $payload)
             ->json() ?? [];
     }
+
+    public function generateInterviewQuestions(array $payload = []): array
+    {
+        return Http::timeout(30)
+            ->post($this->baseUrl . '/generate-interview-questions', $payload)
+            ->json() ?? [];
+    }
 }
