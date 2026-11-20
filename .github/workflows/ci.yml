@@ -41,10 +41,18 @@ jobs:
         run: |
           cd backend-laravel
           composer validate --strict
+      - name: Prepare Environment
+        run: |
+          cd backend-laravel
+          cp .env.example .env
       - name: Install Composer Dependencies
         run: |
           cd backend-laravel
-          composer install --prefer-dist --no-progress
+          composer install --no-interaction --prefer-dist --no-progress
+      - name: Generate App Key
+        run: |
+          cd backend-laravel
+          php artisan key:generate
 
   frontend:
     name: Frontend (React & Vite)
