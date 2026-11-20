@@ -25,7 +25,9 @@ jobs:
       - name: Run Pytest
         run: |
           cd ai-service-fastapi
-          pytest tests -v
+          python -m pytest tests -v
+        env:
+          PYTHONPATH: .
 
   backend:
     name: Backend (Laravel)
