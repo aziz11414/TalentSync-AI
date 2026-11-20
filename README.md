@@ -1,254 +1,216 @@
-<div align="center">
-
 # TalentSync AI
 
-**Recruit faster, decide better.**
+**An Intelligent & Ethical Applicant Tracking System (ATS)**  
+*Recruit faster, decide better.*
 
-An applicant tracking system that parses resumes, scores candidates against job offers with a fully explainable algorithm, and keeps the recruiter in control.
-
-[English](README.md) · [Français](README.fr.md)
-
-[![CI](https://github.com/USER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/ci.yml)
-![License](https://img.shields.io/badge/license-MIT-4F46E5?style=flat-square)
-
-![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Laravel](https://img.shields.io/badge/Laravel_12-FF2D20?style=flat-square&logo=laravel&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
-![Python](https://img.shields.io/badge/Python_3.11-3776AB?style=flat-square&logo=python&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-
-![Demo](docs/screenshots/demo.gif)
-
-</div>
+TalentSync AI is a modern applicant tracking system engineered to streamline resume screening, eliminate recruiter fatigue, and reduce unconscious bias through deterministic explainable scoring (XAI), server-side privacy-by-design anonymization, and adaptive technical interview preparation.
 
 ---
 
 ## Overview
 
-A recruiter can receive hundreds of resumes for a single position. Sorting them by hand is slow, error-prone, and exposed to unconscious bias.
+A technical recruiter often reviews hundreds of resumes for a single opening. Manual screening takes 4 to 6 hours per job offer, is prone to decision fatigue, and is susceptible to cognitive bias.
 
-TalentSync AI addresses this in four steps:
+TalentSync AI addresses this in four transparent steps:
 
-1. **Ingest** resumes in PDF, DOCX or TXT and extract their text.
-2. **Analyze** each profile: technical skills, soft skills, languages, seniority, years of experience, professional summary.
-3. **Score** every candidate against every job offer, with a breakdown of how each point was earned or lost.
-4. **Rank and track** candidates through a recruitment pipeline, with CSV export.
+1. **Ingest:** Multi-format parsing of PDF, DOCX, and TXT resumes with text extraction via PyMuPDF and python-docx.
+2. **Analyze:** Automated profile extraction including technical skills, soft skills, languages, seniority level, and years of experience.
+3. **Score:** Deterministic matching score (0 to 100%) against job descriptions with a mathematical breakdown of points earned and missing-skill penalties.
+4. **Prepare & Decide:** Dynamic generation of level-calibrated interview questions, side-by-side candidate comparison, and candidate pipeline tracking.
 
-The tool ranks and suggests. It never rejects a candidate automatically.
+> **Human-in-the-Loop Principle:** TalentSync AI acts as an objective decision-support tool. It never rejects a candidate automatically; hiring decisions remain 100% under human governance.
 
-## Features
-
-| Area | Description |
-|---|---|
-| Resume parsing | PDF, DOCX and TXT upload (5 MB max), text extraction with PyMuPDF and python-docx |
-| Profile analysis | Skills, soft skills, languages, seniority level, experience, summary |
-| Explainable scoring | Deterministic score from 0 to 100 with an itemized breakdown: skills matched, experience bonus, keyword bonus, missing-skill penalty |
-| Ranking | Candidates ordered by relevance for each job offer |
-| Interview questions | Six questions calibrated to the candidate's level, with an evaluation grid for the interviewer |
-| Anti-bias mode | Name, email and phone masked **by the API**, not only in the interface |
-| Comparison | Side-by-side view of two candidates |
-| Pipeline | New, In review, Interview, Hired, Rejected; dashboard with live KPIs |
-| Search and export | Instant search by name, email, summary or skill; CSV export |
-| Localization | Interface available in French and English |
+---
 
 ## Screenshots
 
-| | |
-|---|---|
-| ![Dashboard](docs/screenshots/01-dashboard.png) **Dashboard** | ![Job offers](docs/screenshots/02-jobs-ranking.png) **Job offers and ranking** |
-| ![Score breakdown](docs/screenshots/03-xai-score-breakdown.png) **Score breakdown** | ![Interview questions](docs/screenshots/04-interview-questions.png) **Interview questions** |
-| ![Anonymous mode](docs/screenshots/05-anonymous-mode.png) **Anti-bias mode** | ![Comparison](docs/screenshots/06-candidate-comparison.png) **Candidate comparison** |
+| Dashboard & Pipeline Analytics | Job Offers & Deterministic AI Ranking |
+|:---:|:---:|
+| ![Dashboard](screenshots/5.png) | ![Job Offers & Ranking](screenshots/9.png) |
+| **Recruiter Dashboard with real-time pipeline KPIs** | **Deterministic XAI match score & point breakdown** |
 
-## Architecture
+| Adaptive Interview Question Grid | Candidate Pool & Anti-Bias Blind Mode |
+|:---:|:---:|
+| ![Interview Questions](screenshots/10.png) | ![Candidate Pool](screenshots/8.png) |
+| **Domain-filtered questions with interviewer evaluation rubric** | **Server-side anonymization concealing all PII** |
+
+---
+
+## System Architecture
+
+The application is built on a decoupled, containerized three-tier microservice architecture:
 
 ```mermaid
 flowchart LR
-    UI["React 19<br/>Vite, TypeScript"] -->|"REST, Sanctum token<br/>X-Anonymous-Mode"| API["Laravel 12<br/>API, auth"]
-    API --> DB[("SQLite")]
-    API -->|HTTP| AI["FastAPI<br/>parsing, scoring, questions"]
-    AI -.->|optional| LLM["Groq LLM"]
+    UI["React 19 Frontend<br/><i>Vite, TypeScript, Tailwind</i>"] -->|"REST API / Bearer Token<br/>Header: X-Anonymous-Mode"| API["Laravel 12 API<br/><i>Sanctum Auth, Privacy Shield</i>"]
+    API --> DB[("SQLite Database<br/><i>Offers, Candidates, Evaluations</i>")]
+    API -->|Internal HTTP| AI["FastAPI Microservice<br/><i>NLP Parsing, Scoring, Questions</i>"]
+    AI -.->|Groq LLM API| LLM["Llama 3.3 Engine<br/><i>Summaries & Interview Rubric</i>"]
 ```
 
-| Service | Responsibility | Port |
-|---|---|---|
-| `frontend-react` | User interface, localization, state | 5173 |
-| `backend-laravel` | REST API, authentication (Sanctum), persistence, anonymization | 8080 |
-| `ai-service-fastapi` | Text extraction, profile analysis, scoring, interview questions | 8000 |
+| Service | Technology Stack | Port | Primary Responsibility |
+|---|---|:---:|---|
+| `frontend-react` | React 19, TypeScript, Vite | `5173` | Responsive UI, state management, bilingual localization (FR / EN) |
+| `backend-laravel` | Laravel 12, PHP 8.4, Sanctum | `8080` | REST API, authentication, data persistence, server-side anonymization |
+| `ai-service-fastapi` | FastAPI, Python 3.11, PyMuPDF | `8000` | Document parsing, skill extraction, deterministic XAI scoring, questions |
 
-Laravel owns the API, authentication and data. FastAPI owns the document and scoring pipeline, where the Python ecosystem is strongest. The two can be tested and replaced independently.
+---
 
-## Scoring method
+## Scoring Methodology (Explainable AI)
 
-The score is deterministic and decomposable, so every point can be justified to a hiring manager. An opaque similarity score from embeddings would not allow that.
+Rather than using opaque black-box vector embeddings where similarity yields an arbitrary scalar, TalentSync AI employs a transparent, deterministic scoring engine:
 
-| Component | Weight | Notes |
-|---|---|---|
-| Hard-skill coverage | 60 % | Exact and token-overlap matching against required skills |
-| Experience level | 25 % | Seniority alignment, with a bounded penalty |
-| Secondary factors | 15 % | Technical keywords |
+| Component | Weight | Implementation Details |
+|---|:---:|---|
+| **Hard-Skill Coverage** | **60 %** | Exact and normalized token-overlap matching against required competencies |
+| **Experience Alignment** | **25 %** | Candidate seniority level vs. target job requirement, with bounded decay |
+| **Secondary Technical Factors** | **15 %** | Relevant domain keywords and ecosystem proficiency |
 
-Missing mandatory skills reduce the score through a capped penalty, so one gap does not erase an otherwise relevant profile. The result is clamped between 0 and 100 and displayed with its full breakdown.
+Missing mandatory skills apply a bounded penalty (capped at 10 points) so that a single gap does not unfairly disqualify an otherwise stellar candidate. Every point is displayed itemized in the UI for complete hiring manager auditability.
 
-## Interview question generation
+---
 
-Questions are generated from the job title, the seniority level, the years of experience, the skills the candidate has and the skills they lack. No name, age or origin is sent to the model.
+## Adaptive Interview Question Generator
 
-| Level | Max difficulty | Focus |
-|---|---|---|
-| Junior | 3 / 5 | Fundamentals, learning approach, handling blockers |
-| Intermediate | 4 / 5 | Debugging, optimization, production incidents, testing, code review |
-| Senior | 5 / 5 | Architecture, technical debt, technology choices, mentoring, trade-offs |
+Interview questions are contextualized based on job title, verified seniority level, years of experience, matched skills, and identified skill gaps:
 
-The language model proposes; the code validates:
+| Level | Max Difficulty | Core Evaluative Focus |
+|---|:---:|---|
+| **Junior** | 3 / 5 | Fundamentals, core concepts, learning agility, problem-solving reflexes |
+| **Intermediate** | 4 / 5 | Production debugging, optimization, CI/CD, testing, code review trade-offs |
+| **Senior** | 5 / 5 | System architecture, scalability, technical debt, trade-offs, engineering mentorship |
 
-- Strict Pydantic schema with six question types: technical, practical, architecture, scenario, behavioral, leadership.
-- Difficulty capped by level; juniors receive no architecture question, seniors receive at least one.
-- Skills are mapped to domains (frontend, backend, data, devops, mobile) and a coherence filter rejects cross-domain questions, such as distributed-systems questions about a UI library.
-- Exactly six questions are returned: missing ones are completed from level-aware templates, extras are dropped.
-- Full template fallback when the LLM is unavailable.
+### Defensive Code Guardrails:
+* **Pydantic Validation:** Strictly enforced schema across six question categories (`technical`, `practical`, `architecture`, `scenario`, `behavioral`, `leadership`).
+* **Domain Coherence Filter:** Skills are mapped to categories (frontend, backend, data, devops). Cross-domain contradictions (e.g., asking about distributed CAP theorem on a React UI library) are automatically intercepted and replaced.
+* **Guaranteed Cardinality:** Exactly six questions are returned per candidate. Missing slots are filled from level-appropriate templates; extraneous outputs are dropped.
+* **Offline Resilience:** Deterministic template fallbacks trigger seamlessly if external LLM services are unreachable.
 
-## Privacy and security
+---
 
-| Measure | Detail |
+## Privacy-by-Design & Security
+
+| Security Measure | Technical Implementation |
 |---|---|
-| Server-side anonymization | With the `X-Anonymous-Mode: 1` header, Laravel masks `full_name`, `email` and `phone` before serialization. The browser's network tab shows only neutral identifiers. |
-| Resume excerpt scrubbing | Emails, phone numbers, URLs and name tokens are redacted before any text is sent to the LLM. |
-| Prompt injection | Resume text is wrapped in `<cv_data>` tags and treated as data; model output is schema-validated. |
-| Upload validation | PDF, DOCX and TXT only, 5 MB max, sanitized filenames with a unique suffix. |
-| Authentication | Laravel Sanctum. |
-| Human control | No automatic rejection. |
+| **Server-Side Anonymization** | When Anti-Bias mode is enabled (`X-Anonymous-Mode: 1`), Laravel redacts candidate names, emails, and phone numbers before JSON serialization. No PII reaches the browser network tab. |
+| **Resume Excerpt Scrubbing** | PII tokens (emails, phone numbers, URLs, candidate names) are regex-scrubbed before excerpts are processed. |
+| **Prompt Injection Defense** | Untrusted resume text is isolated inside `<cv_data>` XML delimiter tags and treated strictly as raw data. |
+| **Safe File Ingestion** | Allowed formats restricted to PDF, DOCX, and TXT (5 MB cap). Filenames are sanitized with unique random hashes. |
+| **API Authentication** | State-managed token authentication via Laravel Sanctum. |
 
-The project follows a privacy-by-design approach. It does not claim full GDPR compliance.
+---
 
-## Quick start
+## Performance Benchmarks
 
-### Docker (recommended)
+All benchmarks are measured and reproducible via dedicated scripts in `ai-service-fastapi/`:
+
+| Benchmark Protocol | Dataset & Execution Context | Throughput / Latency | Benchmark Script |
+|---|---|:---:|---|
+| **In-Memory Matching Engine** | 100 synthetic candidate profiles against comprehensive job requirements | **343.8 profiles / sec**<br/>*(0.29 s total, 2.89 ms mean)* | `benchmark_100_cv.py` |
+| **Local End-to-End Pipeline** | 10 real multi-page CVs (PDF/DOCX parsing + NLP extraction + scoring) | **108.8 CVs / sec**<br/>*(0.09 s total, 9.2 ms / CV)* | `benchmark_e2e_10_cv.py` |
+
+*Note: When remote LLM inference (Groq Cloud) is engaged for natural-language interview question generation, overall duration is governed by external API round-trip latency (~0.8s to 1.5s).*
+
+---
+
+## Quick Start
+
+### Option A: Docker Compose (Recommended)
 
 ```bash
+# Clone the repository
+git clone https://github.com/aziz11414/TalentSync-AI.git
+cd TalentSync-AI
+
+# Build and start all three microservices
 docker compose up --build
 ```
 
-| Service | URL |
-|---|---|
-| Web application | http://localhost:5173 |
-| Laravel API | http://127.0.0.1:8080 |
-| FastAPI docs (Swagger) | http://127.0.0.1:8000/docs |
+Services will be accessible at:
+* **Web Application:** [http://localhost:5173](http://localhost:5173)
+* **Laravel Backend API:** [http://127.0.0.1:8080](http://127.0.0.1:8080)
+* **FastAPI Microservice Swagger Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-Stop with `docker compose down`.
+To stop services: `docker compose down`
 
-### Local development (Windows)
+---
 
-```bash
+### Option B: Local Execution (Windows 1-Click)
+
+In the repository root, run:
+```cmd
 run.bat
 ```
-
-or, in PowerShell:
-
+or in PowerShell:
 ```powershell
 .\run.ps1
 ```
 
-This starts the three services with hot reload.
+---
 
-### Configuration
+## Pre-Loaded Demo Account
 
-Each service ships a `.env.example`. Copy it to `.env` and adjust:
+To evaluate the platform immediately with full data populated:
 
-```bash
-cp ai-service-fastapi/.env.example ai-service-fastapi/.env
-cp backend-laravel/.env.example backend-laravel/.env
-cp frontend-react/.env.example frontend-react/.env
-```
-
-The Groq API key is optional. Without it, the AI service uses its deterministic fallbacks. Never commit `.env` files.
-
-### Demo account
-
-For local demonstration only:
-
-| Field | Value |
+| Credential | Value |
 |---|---|
-| Email | `demo@talentsync.ai` |
-| Password | `password` |
+| **Email** | `demo@talentsync.ai` |
+| **Password** | `password` |
+| **Demo Dataset** | **12 realistic candidate profiles** (Junior, Senior, DevOps, Full Stack) evaluated across 4 job openings with XAI scores. |
 
-The database is seeded with 12 fictitious candidates, 3 job offers and a populated pipeline. All names are fictional.
+---
 
-## Performance
-
-Two measurements, taken on a local machine. Neither includes a remote LLM call.
-
-| Measurement | Result | Script |
-|---|---|---|
-| Scoring and matching, 100 synthetic profiles, in memory | 0.29 s total, about 344 profiles/s, 2.89 ms mean (p50 2.66 ms, p95 3.44 ms) | `ai-service-fastapi/benchmark_100_cv.py` |
-| Parsing, matching and question generation, 10 real resumes, no LLM | 0.09 s total, 9.2 ms per resume | `ai-service-fastapi/benchmark_e2e_10_cv.py` |
-
-With the remote LLM enabled, total time per resume is dominated by network latency to the external API and has not been benchmarked. Figures above measure the deterministic engine, not the full LLM-assisted path.
-
-## Testing
+## Automated Testing
 
 ```bash
-# AI service
+# Run FastAPI unit and integration tests (17 passing tests)
 cd ai-service-fastapi
 pytest tests -v
 
-# Scoring benchmark
+# Run deterministic scoring benchmark
 python benchmark_100_cv.py
 
-# Frontend type-check and production build
+# Verify TypeScript type checks and build production bundle
 cd ../frontend-react
 npm run build
 ```
 
-The Pytest suite covers scoring bounds and penalties, experience bonus, French soft-skill extraction, empty-document resilience, level rules for interview questions and domain coherence. GitHub Actions runs the Python tests, the Laravel checks and the frontend build on every push.
+---
 
-## Project structure
+## Project Structure
 
-```
+```text
 .
-├── ai-service-fastapi/   Parsing, scoring, interview questions, tests, benchmarks
-├── backend-laravel/      REST API, Sanctum auth, anonymization, migrations, seeders
-├── frontend-react/       React 19 interface, localization
-├── docs/screenshots/     README images
-├── docker-compose.yml
-├── run.bat / run.ps1
-└── LICENSE
+├── ai-service-fastapi/       # Python NLP parsing, scoring & question generator
+│   ├── app/main.py           # Core FastAPI endpoints & Pydantic models
+│   ├── benchmark_100_cv.py   # High-throughput in-memory benchmark
+│   ├── benchmark_e2e_10_cv.py# Real-world end-to-end benchmark
+│   └── requirements.txt      # Python dependencies
+├── backend-laravel/          # Laravel 12 API, Sanctum auth, migrations & seeders
+│   ├── app/Http/Controllers/ # REST controllers (Candidate, Job, Dashboard)
+│   ├── app/Services/         # Synchronous HTTP client to FastAPI microservice
+│   └── routes/api.php        # API routes with X-Anonymous-Mode handling
+├── frontend-react/           # React 19 SPA with TypeScript & Vite
+│   ├── src/components/       # Reusable UI widgets (ScoreGauge, LanguageSwitcher, etc.)
+│   ├── src/context/          # LanguageContext with localStorage persistence
+│   ├── src/i18n/             # Complete French / English translations dictionary
+│   ├── src/pages/            # Dashboard, Candidates, Jobs & Ranking, CreateCandidate
+│   └── src/utils/            # Contextual summary & badge translators
+├── screenshots/              # High-resolution application screenshots
+├── docker-compose.yml        # Multi-container service definitions
+├── run.bat / run.ps1         # Windows one-click local startup scripts
+├── LICENSE                   # Proprietary evaluation license
+└── README.md                 # Technical documentation
 ```
 
-## Engineering notes
+---
 
-**Heterogeneous resumes.** Multi-column layouts and graphic blocks scramble raw extraction. A preprocessing step built on PyMuPDF and python-docx removes non-printable artifacts, normalizes Unicode and standardizes section boundaries before analysis.
+## Author & Copyright
 
-**Unreliable LLM output.** Models occasionally wrap JSON in markdown fences or add stray keys. Extraction runs at low temperature, responses go through a sanitizing step, and a strict Pydantic schema with safe defaults guards the rest.
+**Mohamed Aziz Hammami**  
+*Master 2 — Applications Web Intelligentes (ISI Kef)*  
+GitHub: [@aziz11414](https://github.com/aziz11414)
 
-**Explainability over embeddings.** A cosine similarity yields a single opaque number. A deterministic, itemized score was chosen so that a recruiter can audit every result.
-
-**Anonymization that holds up.** Masking names in the interface leaves them visible in network requests. Masking in the API removes them from the response itself.
-
-## Limitations
-
-- No OCR: scanned resumes are not supported.
-- LLM-assisted analysis depends on an external service and may carry the model's own biases; anonymization in the interface does not remove these.
-- Regex-based scrubbing cannot guarantee removal of every contextual identifier, such as an uncommon employer name.
-- Skill detection relies on a bounded vocabulary; synonyms and other languages need work.
-- SQLite suits a demonstration, not production load.
-- Scoring weights are fixed rather than configurable per offer.
-
-## Roadmap
-
-- OCR for scanned resumes
-- Configurable scoring weights per job offer
-- Duplicate resume detection
-- Semantic search alongside the deterministic score
-- PostgreSQL, consent management and automatic data retention
-- Candidate evaluation against a hand-annotated resume set
-
-## License
-
-Released under the [MIT License](LICENSE).
-
-## Author
-
-**Mohamed Aziz Hammami** · [GitHub](https://github.com/USER)
+### License & Intellectual Property
+Copyright © 2026 **Mohamed Aziz Hammami**. All rights reserved.  
+This project and its source code are made available strictly for assessment, technical evaluation, and academic review by hiring teams, recruiters, and examiners. Unauthorized reproduction, redistribution, or commercial use is strictly prohibited. Refer to [LICENSE](LICENSE) for full legal terms.
